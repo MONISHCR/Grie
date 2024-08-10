@@ -17,7 +17,7 @@ mongoose.connect('mongodb+srv://Monish:Monish21@cluster0.mtbgshr.mongodb.net/gri
 app.use('/api/grievances', grievanceRoutes);
 app.use('/api/admin', adminRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
