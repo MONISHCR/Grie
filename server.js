@@ -7,6 +7,9 @@ const jsPDF = require('jspdf');
 const autoTable = require('jspdf-autotable');
 const { JSDOM } = require('jsdom');
 
+
+process.removeAllListeners('warning');
+
 const grievanceRoutes = require('./routes/grievance');
 const adminRoutes = require('./routes/admin');
 
@@ -67,7 +70,7 @@ async function sendGrievanceReport() {
       from: 'kmitcsm.akr21@gmail.com',
       to: ['monish21052004@gmail.com', 'getshaistha8@gmail.com'],
       subject: 'Daily Grievance Report',
-      text: 'This is an automated message. Dear Crs,Please find the attached grievance report for today.',
+      text: 'This is an automated message. Dear Crs, Please find the attached grievance report for today.',
       attachments: [{
         filename: 'Grievance_Report.pdf',
         content: pdfData,
