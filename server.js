@@ -7,7 +7,6 @@ const jsPDF = require('jspdf');
 const autoTable = require('jspdf-autotable');
 const { JSDOM } = require('jsdom');
 
-
 process.removeAllListeners('warning');
 
 const grievanceRoutes = require('./routes/grievance');
@@ -22,12 +21,12 @@ mongoose.connect('mongodb+srv://Monish:Monish21@cluster0.mtbgshr.mongodb.net/gri
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Failed to connect to MongoDB', err));
 
-// Nodemailer configuration
+// Nodemailer configuration using App Password
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'kmitcsm.akr21@gmail.com',
-    pass: '@KMITcsmacrs'
+    pass: 'nncd bwgr mfrb zxgl' // App Password here
   }
 });
 
@@ -68,7 +67,7 @@ async function sendGrievanceReport() {
 
     const mailOptions = {
       from: 'kmitcsm.akr21@gmail.com',
-      to: ['monish21052004@gmail.com', 'getshaistha8@gmail.com'],
+      to: ['monish21052004@gmail.com', 'getshaistha8@gmail.com','parugula.saicharan@gmail.com','harikakolli1648@gmail.com'],
       subject: 'Daily Grievance Report',
       text: 'This is an automated message. Dear Crs, Please find the attached grievance report for today.',
       attachments: [{
@@ -92,6 +91,7 @@ async function sendGrievanceReport() {
 
 // Schedule the task to run at 9:00 PM IST every day
 cron.schedule('30 15 * * *', () => {
+  console.log('Running scheduled email job at 14:56 IST');
   sendGrievanceReport();
 }, {
   timezone: "Asia/Kolkata"
