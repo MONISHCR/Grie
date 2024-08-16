@@ -6,9 +6,11 @@ const cron = require('node-cron');
 const { jsPDF } = require('jspdf');
 require('jspdf-autotable'); // Importing jspdf-autotable
 const { JSDOM } = require('jsdom');
+require('dotenv').config(); // Require dotenv to load environment variables
 
 process.removeAllListeners('warning');
 
+// Importing routes
 const grievanceRoutes = require('./routes/grievance');
 const adminRoutes = require('./routes/admin');
 
@@ -16,53 +18,62 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Atlas Connection String
-mongoose.connect('mongodb+srv://Monish:Monish21@cluster0.mtbgshr.mongodb.net/grievanceDB?retryWrites=true&w=majority')
-  .then(() => console.log('Connected to MongoDB'))
+// MongoDB Atlas Connection
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Connected to MongoDB');
+    // Ensuring the index is created for the createdAt field
+    mongoose.connection.collection('grievances').createIndex({ createdAt: 1 });
+  })
   .catch(err => console.error('Failed to connect to MongoDB', err));
 
 // Nodemailer configuration using App Password
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'kmitcsm.akr21@gmail.com',
-    pass: 'nncd bwgr mfrb zxgl' // App Password here
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
 // Function to generate PDF
 async function generateGrievancePDF(grievances) {
-  // JSDOM to emulate a browser environment
-  const dom = new JSDOM();
-  global.window = dom.window;
-  global.document = dom.window.document;
+  try {
+    // JSDOM to emulate a browser environment
+    const dom = new JSDOM();
+    global.window = dom.window;
+    global.document = dom.window.document;
 
-  // Initialize jsPDF
-  const doc = new jsPDF();
+    // Initialize jsPDF
+    const doc = new jsPDF();
 
-  // Set PDF title and subtitle
-  doc.setFontSize(18);
-  doc.text('Grievance Report', 14, 22);
-  doc.setFontSize(12);
-  doc.text('Timeline:', 14, 32);
+    // Set PDF title and subtitle
+    doc.setFontSize(18);
+    doc.text('Grievance Report', 14, 22);
+    doc.setFontSize(12);
+    doc.text('Timeline:', 14, 32);
 
-  // Map grievance data for autoTable
-  const grievanceData = grievances.map((grievance, index) => [
-    index + 1,
-    grievance.description,
-    grievance.semester,
-    new Date(grievance.createdAt).toLocaleDateString(),
-  ]);
+    // Map grievance data for autoTable
+    const grievanceData = grievances.map((grievance, index) => [
+      index + 1,
+      grievance.description,
+      grievance.semester,
+      new Date(grievance.createdAt).toLocaleDateString(),
+    ]);
 
-  // Generate autoTable
-  doc.autoTable({
-    head: [['#', 'Description', 'Semester', 'Date']],
-    body: grievanceData,
-    startY: 40,
-  });
+    // Generate autoTable
+    doc.autoTable({
+      head: [['#', 'Description', 'Semester', 'Date']],
+      body: grievanceData,
+      startY: 40,
+    });
 
-  // Output the PDF as an ArrayBuffer
-  return Buffer.from(doc.output('arraybuffer'));
+    // Output the PDF as an ArrayBuffer
+    return Buffer.from(doc.output('arraybuffer'));
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
 }
 
 // Optional: Function to get the last email sent date (stored in DB or file)
@@ -102,8 +113,8 @@ async function sendGrievanceReport() {
 
       // Prepare email options with PDF attachment
       const mailOptions = {
-        from: 'kmitcsm.akr21@gmail.com',
-        to: ['monish21052004@gmail.com','21bd1a6761csd@gmail.com', 'getshaistha8@gmail.com','parugula.saicharan@gmail.com','harikakolli1648@gmail.com'],
+        from: process.env.EMAIL_USER,
+        to: process.env.RECIPIENT_EMAILS.split(','),
         subject: 'Daily Grievance Report',
         text: `This is an automated message.\nDear Crs, Please find the attached grievance report for today (${formattedDate}).\n Thank You \n Regards \n Assist-Cell(CSM-A)`,
         attachments: [{
@@ -126,8 +137,8 @@ async function sendGrievanceReport() {
     } else {
       // Prepare email options with text only
       const mailOptions = {
-        from: 'kmitcsm.akr21@gmail.com',
-        to: ['monish21052004@gmail.com','21bd1a6761csd@gmail.com', 'getshaistha8@gmail.com','parugula.saicharan@gmail.com','harikakolli1648@gmail.com'],
+        from: process.env.EMAIL_USER,
+        to: process.env.RECIPIENT_EMAILS.split(','),
         subject: 'Daily Grievance Report',
         text: `This is an automated message.\nDear Crs, No new grievances were reported today (${formattedDate}).`,
       };
@@ -146,9 +157,9 @@ async function sendGrievanceReport() {
   }
 }
 
-// Schedule the task to run at 22:19 IST every day
-cron.schedule('53 22 * * *', () => {
-  console.log('Running scheduled email job at 22:19 IST');
+// Schedule the task to run at 22:53 IST every day
+cron.schedule('00 21 * * *', () => {
+  console.log('Running scheduled email job at 22:53 IST');
   sendGrievanceReport();
 });
 
